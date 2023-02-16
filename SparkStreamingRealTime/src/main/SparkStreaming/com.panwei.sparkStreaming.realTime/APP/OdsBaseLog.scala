@@ -1,8 +1,10 @@
 package com.panwei.sparkStreaming.realTime.APP
 
+import java.lang
+
 import com.alibaba.fastjson.serializer.SerializeConfig
 import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
-import com.panwei.sparkStreaming.realTime.Bean.{PageDisplayLog, PageLog}
+import com.panwei.sparkStreaming.realTime.Bean.{PageActionLog, PageDisplayLog, PageLog}
 import com.panwei.sparkStreaming.realTime.Util.{MyKafkaUtils, PropsUtil}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.SparkConf
@@ -136,7 +138,17 @@ object OdsBaseLog {
               val actionObj: JSONArray = jsonObj.getJSONArray("actions")
               if(actionObj != null && actionObj.size > 0 ){
                 for(i <- 0 until actionObj.size() ){
-                  
+                  val indexObj: JSONObject = actionObj.getJSONObject(i)
+                  val action_id: String = indexObj.getString("action_id")
+                  val action_item: String = indexObj.getString("item")
+                  val action_item_type: String = indexObj.getString("item_type")
+                  val action_ts: Long = indexObj.getLong("ts")
+
+                  // 封装成actionLog
+                  val pageLog: PageActionLog = PageActionLog(mid,uid,ar,ch,is_new,md,os,vc,ba,page_id,last_page_id,item,item_type,during_time,source_type,action_id,action_item,action_item_type,action_ts)
+                  MyKafkaUtils.send("DWD_PAGE_ACTION_TOPIC",JSON.toJSONString(pageLog, new SerializeConfig(true)))
+
+
                 }
               }
 
